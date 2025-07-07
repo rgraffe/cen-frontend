@@ -18,18 +18,20 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, Plus, Edit, Trash2, Shield, Search } from "lucide-react"
+import { Users, Plus, Edit, Trash2, Shield, Search, GraduationCap, BookOpen } from "lucide-react"
 
 interface SystemUser {
   id: string
   name: string
   email: string
-  role: "superuser" | "admin" | "professor"
+  role: "superuser" | "admin" | "professor" | "student"
   createdAt: string
   lastLogin: string
   status: "active" | "inactive" | "suspended"
   monthlyReservations?: number
   totalReservations?: number
+  studentId?: string // Para estudiantes
+  department?: string // Para profesores
 }
 
 interface UserManagementProps {
@@ -71,6 +73,7 @@ export function UserManagement({ user }: UserManagementProps) {
       status: "active",
       monthlyReservations: 12,
       totalReservations: 45,
+      department: "Ingeniería de Sistemas",
     },
     {
       id: "4",
@@ -82,35 +85,51 @@ export function UserManagement({ user }: UserManagementProps) {
       status: "active",
       monthlyReservations: 8,
       totalReservations: 67,
+      department: "Ciencias de la Computación",
     },
     {
       id: "5",
-      name: "Dra. Ana Martínez",
-      email: "ana.martinez@ucab.edu.ve",
-      role: "professor",
-      createdAt: "2024-04-12",
-      lastLogin: "2025-01-20",
-      status: "inactive",
-      monthlyReservations: 0,
-      totalReservations: 23,
+      name: "Pedro Martínez",
+      email: "pedro.martinez@ucab.edu.ve",
+      role: "student",
+      createdAt: "2024-09-01",
+      lastLogin: "2025-01-26",
+      status: "active",
+      monthlyReservations: 5,
+      totalReservations: 15,
+      studentId: "2024-001234",
     },
     {
       id: "6",
-      name: "Prof. Carlos López",
-      email: "carlos.lopez@ucab.edu.ve",
-      role: "professor",
-      createdAt: "2024-05-18",
-      lastLogin: "2025-01-26",
+      name: "Ana Rodríguez",
+      email: "ana.rodriguez@ucab.edu.ve",
+      role: "student",
+      createdAt: "2024-09-01",
+      lastLogin: "2025-01-25",
       status: "active",
-      monthlyReservations: 15,
-      totalReservations: 34,
+      monthlyReservations: 3,
+      totalReservations: 8,
+      studentId: "2024-001235",
+    },
+    {
+      id: "7",
+      name: "Luis González",
+      email: "luis.gonzalez@ucab.edu.ve",
+      role: "student",
+      createdAt: "2024-09-01",
+      lastLogin: "2025-01-20",
+      status: "inactive",
+      monthlyReservations: 0,
+      totalReservations: 2,
+      studentId: "2024-001236",
     },
   ])
 
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.studentId && u.studentId.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesRole = filterRole === "all" || u.role === filterRole
     const matchesStatus = filterStatus === "all" || u.status === filterStatus
 
@@ -125,6 +144,8 @@ export function UserManagement({ user }: UserManagementProps) {
         return "Administrador"
       case "professor":
         return "Profesor"
+      case "student":
+        return "Estudiante"
       default:
         return role
     }
@@ -138,8 +159,25 @@ export function UserManagement({ user }: UserManagementProps) {
         return "bg-blue-100 text-blue-800"
       case "professor":
         return "bg-green-100 text-green-800"
+      case "student":
+        return "bg-orange-100 text-orange-800"
       default:
         return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "superuser":
+        return <Shield className="w-3 h-3 mr-1" />
+      case "admin":
+        return <Shield className="w-3 h-3 mr-1" />
+      case "professor":
+        return <GraduationCap className="w-3 h-3 mr-1" />
+      case "student":
+        return <BookOpen className="w-3 h-3 mr-1" />
+      default:
+        return null
     }
   }
 
@@ -181,7 +219,24 @@ export function UserManagement({ user }: UserManagementProps) {
     totalUsers: users.length,
     activeUsers: users.filter((u) => u.status === "active").length,
     professors: users.filter((u) => u.role === "professor").length,
+    students: users.filter((u) => u.role === "student").length,
     admins: users.filter((u) => u.role === "admin").length,
+  }
+
+  // Verificar permisos: solo superusuarios y administradores pueden gestionar usuarios
+  const canManageUsers = user.role === "superuser" || user.role === "admin"
+  const canCreateSuperusers = user.role === "superuser"
+
+  if (!canManageUsers) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-medium mb-2">Acceso Restringido</h3>
+          <p className="text-muted-foreground">No tienes permisos para gestionar usuarios.</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -190,7 +245,11 @@ export function UserManagement({ user }: UserManagementProps) {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Gestión de Usuarios</h2>
-          <p className="text-muted-foreground">Administra cuentas de usuario y permisos del sistema</p>
+          <p className="text-muted-foreground">
+            {user.role === "superuser"
+              ? "Administra todas las cuentas de usuario y permisos del sistema"
+              : "Crea y gestiona cuentas de profesores y estudiantes"}
+          </p>
         </div>
         <Dialog open={showNewUser} onOpenChange={setShowNewUser}>
           <DialogTrigger asChild>
@@ -204,13 +263,17 @@ export function UserManagement({ user }: UserManagementProps) {
               <DialogTitle>Crear Nuevo Usuario</DialogTitle>
               <DialogDescription>Registra un nuevo usuario en el sistema</DialogDescription>
             </DialogHeader>
-            <NewUserForm onClose={() => setShowNewUser(false)} />
+            <NewUserForm
+              onClose={() => setShowNewUser(false)}
+              canCreateSuperusers={canCreateSuperusers}
+              currentUserRole={user.role}
+            />
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
@@ -235,8 +298,19 @@ export function UserManagement({ user }: UserManagementProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Estudiantes</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.students}</div>
+            <p className="text-xs text-muted-foreground">Pueden hacer reservas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Profesores</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.professors}</div>
@@ -247,11 +321,11 @@ export function UserManagement({ user }: UserManagementProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Administradores</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.admins}</div>
-            <p className="text-xs text-muted-foreground">Gestión de laboratorios</p>
+            <p className="text-xs text-muted-foreground">Gestión del sistema</p>
           </CardContent>
         </Card>
       </div>
@@ -269,7 +343,7 @@ export function UserManagement({ user }: UserManagementProps) {
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search"
-                  placeholder="Nombre o email..."
+                  placeholder="Nombre, email o ID de estudiante..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -285,9 +359,10 @@ export function UserManagement({ user }: UserManagementProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los roles</SelectItem>
-                  <SelectItem value="superuser">Superusuario</SelectItem>
+                  {user.role === "superuser" && <SelectItem value="superuser">Superusuario</SelectItem>}
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="professor">Profesor</SelectItem>
+                  <SelectItem value="student">Estudiante</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -338,20 +413,27 @@ export function UserManagement({ user }: UserManagementProps) {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                          <Users className="w-4 h-4" />
+                          {u.role === "student" ? (
+                            <BookOpen className="w-4 h-4" />
+                          ) : u.role === "professor" ? (
+                            <GraduationCap className="w-4 h-4" />
+                          ) : (
+                            <Users className="w-4 h-4" />
+                          )}
                         </div>
                         <div>
                           <div className="font-medium">{u.name}</div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Users className="w-3 h-3 mr-1" />
+                          <div className="text-sm text-muted-foreground">
                             {u.email}
+                            {u.studentId && <div className="text-xs text-blue-600">ID: {u.studentId}</div>}
+                            {u.department && <div className="text-xs text-green-600">{u.department}</div>}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge className={getRoleColor(u.role)}>
-                        {u.role === "superuser" && <Shield className="w-3 h-3 mr-1" />}
+                        {getRoleIcon(u.role)}
                         {getRoleLabel(u.role)}
                       </Badge>
                     </TableCell>
@@ -374,7 +456,7 @@ export function UserManagement({ user }: UserManagementProps) {
                       <div className="text-sm">{new Date(u.lastLogin).toLocaleDateString("es-ES")}</div>
                     </TableCell>
                     <TableCell>
-                      {u.role === "professor" ? (
+                      {u.role === "professor" || u.role === "student" ? (
                         <div className="text-sm">
                           <div>Este mes: {u.monthlyReservations || 0}</div>
                           <div className="text-muted-foreground">Total: {u.totalReservations || 0}</div>
@@ -406,15 +488,31 @@ export function UserManagement({ user }: UserManagementProps) {
   )
 }
 
-function NewUserForm({ onClose }: { onClose: () => void }) {
+function NewUserForm({
+  onClose,
+  canCreateSuperusers,
+  currentUserRole,
+}: {
+  onClose: () => void
+  canCreateSuperusers: boolean
+  currentUserRole: string
+}) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [role, setRole] = useState<"admin" | "professor">("professor")
+  const [role, setRole] = useState<"admin" | "professor" | "student">("student")
+  const [studentId, setStudentId] = useState("")
+  const [department, setDepartment] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // Implementar lógica de creación de usuario
-    console.log("Nuevo usuario:", { name, email, role })
+    console.log("Nuevo usuario:", {
+      name,
+      email,
+      role,
+      studentId: role === "student" ? studentId : undefined,
+      department: role === "professor" ? department : undefined,
+    })
     onClose()
   }
 
@@ -426,7 +524,7 @@ function NewUserForm({ onClose }: { onClose: () => void }) {
           id="user-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="ej. Dr. Juan Pérez"
+          placeholder="ej. Dr. Juan Pérez / Ana María González"
           required
         />
       </div>
@@ -445,21 +543,54 @@ function NewUserForm({ onClose }: { onClose: () => void }) {
 
       <div className="space-y-2">
         <Label htmlFor="user-role">Rol</Label>
-        <Select value={role} onValueChange={(value: "admin" | "professor") => setRole(value)}>
+        <Select value={role} onValueChange={(value: "admin" | "professor" | "student") => setRole(value)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="student">Estudiante</SelectItem>
             <SelectItem value="professor">Profesor</SelectItem>
-            <SelectItem value="admin">Administrador</SelectItem>
+            {currentUserRole === "superuser" && <SelectItem value="admin">Administrador</SelectItem>}
           </SelectContent>
         </Select>
       </div>
+
+      {role === "student" && (
+        <div className="space-y-2">
+          <Label htmlFor="student-id">ID de Estudiante</Label>
+          <Input
+            id="student-id"
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+            placeholder="ej. 2024-001234"
+            required
+          />
+        </div>
+      )}
+
+      {role === "professor" && (
+        <div className="space-y-2">
+          <Label htmlFor="department">Departamento</Label>
+          <Input
+            id="department"
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+            placeholder="ej. Ingeniería de Sistemas"
+            required
+          />
+        </div>
+      )}
 
       <div className="bg-blue-50 p-3 rounded-lg">
         <p className="text-sm text-blue-800">
           <strong>Nota:</strong> El usuario recibirá un correo electrónico con las instrucciones para activar su cuenta
           y establecer su contraseña.
+          {role === "student" && (
+            <>
+              <br />
+              <strong>Límite de reservas:</strong> Los estudiantes pueden hacer máximo 10 horas de reservas por mes.
+            </>
+          )}
         </p>
       </div>
 
@@ -467,7 +598,10 @@ function NewUserForm({ onClose }: { onClose: () => void }) {
         <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={!name || !email}>
+        <Button
+          type="submit"
+          disabled={!name || !email || (role === "student" && !studentId) || (role === "professor" && !department)}
+        >
           Crear Usuario
         </Button>
       </div>

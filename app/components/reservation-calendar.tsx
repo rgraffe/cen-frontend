@@ -24,7 +24,7 @@ interface ReservationCalendarProps {
     id: string
     name: string
     email: string
-    role: "superuser" | "admin" | "professor"
+    role: "superuser" | "admin" | "professor" | "student"
   }
 }
 
@@ -138,7 +138,7 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
             Horario de Reservas
           </CardTitle>
           <CardDescription>
-            {user.role === "professor"
+            {user.role === "professor" || user.role === "student"
               ? "Consulta la disponibilidad y realiza nuevas reservas"
               : "Gestiona y supervisa todas las reservas del sistema"}
           </CardDescription>
@@ -173,7 +173,7 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
               />
             </div>
 
-            {user.role === "professor" && (
+            {(user.role === "professor" || user.role === "student") && (
               <Dialog open={showNewReservation} onOpenChange={setShowNewReservation}>
                 <DialogTrigger asChild>
                   <Button>Nueva Reserva</Button>
@@ -240,7 +240,7 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
                               <Badge variant={reservation.status === "active" ? "default" : "secondary"}>
                                 {reservation.status === "active" ? "Activa" : "Programada"}
                               </Badge>
-                              {user.role !== "professor" && (
+                              {user.role !== "professor" && user.role !== "student" && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -316,7 +316,7 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
                     <Badge variant={reservation.status === "active" ? "default" : "secondary"}>
                       {reservation.status === "active" ? "Activa" : "Programada"}
                     </Badge>
-                    {user.role !== "professor" && (
+                    {user.role !== "professor" && user.role !== "student" && (
                       <Button size="sm" variant="outline" onClick={() => handleCancelReservation(reservation.id)}>
                         Cancelar
                       </Button>

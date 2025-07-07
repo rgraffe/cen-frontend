@@ -10,7 +10,7 @@ import { ReservationCalendar } from "./components/reservation-calendar"
 import { LabManagement } from "./components/lab-management"
 import { UserManagement } from "./components/user-management"
 
-type UserRole = "superuser" | "admin" | "professor"
+type UserRole = "superuser" | "admin" | "professor" | "student"
 
 interface User {
   id: string
@@ -50,7 +50,12 @@ export default function Home() {
     { id: "dashboard", label: "Dashboard", icon: Calendar, show: true },
     { id: "calendar", label: "Horarios", icon: Clock, show: true },
     { id: "labs", label: "Laboratorios", icon: Computer, show: currentUser.role !== "professor" },
-    { id: "users", label: "Usuarios", icon: Users, show: currentUser.role === "superuser" },
+    {
+      id: "users",
+      label: "Usuarios",
+      icon: Users,
+      show: currentUser.role === "superuser" || currentUser.role === "admin",
+    },
   ]
 
   return (
@@ -71,7 +76,9 @@ export default function Home() {
                     ? "Superusuario"
                     : currentUser.role === "admin"
                       ? "Administrador"
-                      : "Profesor"}
+                      : currentUser.role === "professor"
+                        ? "Profesor"
+                        : "Estudiante"}
                 </Badge>
               </div>
               <Button variant="ghost" size="sm" onClick={handleLogout}>

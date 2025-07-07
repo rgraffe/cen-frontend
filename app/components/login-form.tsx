@@ -12,7 +12,7 @@ interface User {
   id: string
   name: string
   email: string
-  role: "superuser" | "admin" | "professor"
+  role: "superuser" | "admin" | "professor" | "student"
 }
 
 interface LoginFormProps {
@@ -28,6 +28,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     superuser: { id: "1", name: "Ana García", email: "ana.garcia@ucab.edu.ve", role: "superuser" as const },
     admin: { id: "2", name: "Carlos Rodríguez", email: "carlos.rodriguez@ucab.edu.ve", role: "admin" as const },
     professor: { id: "3", name: "María López", email: "maria.lopez@ucab.edu.ve", role: "professor" as const },
+    student: { id: "4", name: "Pedro Martínez", email: "pedro.martinez@ucab.edu.ve", role: "student" as const },
   }
 
   const handleLogin = (e: React.FormEvent) => {
@@ -55,6 +56,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 <SelectItem value="superuser">Superusuario</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
                 <SelectItem value="professor">Profesor</SelectItem>
+                <SelectItem value="student">Estudiante</SelectItem>
               </SelectContent>
             </Select>
           </div>

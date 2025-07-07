@@ -9,7 +9,7 @@ interface User {
   id: string
   name: string
   email: string
-  role: "superuser" | "admin" | "professor"
+  role: "superuser" | "admin" | "professor" | "student"
 }
 
 interface DashboardProps {
@@ -22,8 +22,8 @@ export function Dashboard({ user }: DashboardProps) {
     totalComputers: 120,
     activeReservations: 15,
     todayReservations: 8,
-    monthlyUsage: user.role === "professor" ? 12 : null,
-    monthlyLimit: user.role === "professor" ? 20 : null,
+    monthlyUsage: user.role === "professor" || user.role === "student" ? 12 : null,
+    monthlyLimit: user.role === "professor" ? 20 : user.role === "student" ? 10 : null,
   }
 
   const recentReservations = [
@@ -169,7 +169,7 @@ export function Dashboard({ user }: DashboardProps) {
       </div>
 
       {/* Usage Limit Warning for Professors */}
-      {user.role === "professor" &&
+      {(user.role === "professor" || user.role === "student") &&
         stats.monthlyUsage &&
         stats.monthlyLimit &&
         stats.monthlyUsage / stats.monthlyLimit > 0.8 && (
