@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ComputerIcon, Plus, Settings, Trash2, Edit, Monitor, Wifi, WifiOff } from "lucide-react"
+import { LaboratorioForm } from "@/components/LaboratorioForm"
 
 interface User {
   id: string
@@ -193,7 +194,7 @@ export function LabManagement({ user }: LabManagementProps) {
               <DialogTitle>Crear Nuevo Laboratorio</DialogTitle>
               <DialogDescription>Ingresa los detalles del nuevo laboratorio</DialogDescription>
             </DialogHeader>
-            <NewLabForm onClose={() => setShowNewLab(false)} />
+            <LaboratorioForm onClose={() => setShowNewLab(false)} />
           </DialogContent>
         </Dialog>
       </div>
@@ -362,68 +363,6 @@ export function LabManagement({ user }: LabManagementProps) {
         </Card>
       ))}
     </div>
-  )
-}
-
-function NewLabForm({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("")
-  const [location, setLocation] = useState("")
-  const [capacity, setCapacity] = useState("")
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Implementar lógica de creación de laboratorio
-    console.log("Nuevo laboratorio:", { name, location, capacity: Number.parseInt(capacity) })
-    onClose()
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="lab-name">Nombre del Laboratorio</Label>
-        <Input
-          id="lab-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="ej. Lab A-101"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="lab-location">Ubicación</Label>
-        <Input
-          id="lab-location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="ej. Edificio A, Piso 1"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="lab-capacity">Capacidad (número de computadoras)</Label>
-        <Input
-          id="lab-capacity"
-          type="number"
-          value={capacity}
-          onChange={(e) => setCapacity(e.target.value)}
-          placeholder="30"
-          min="1"
-          max="100"
-          required
-        />
-      </div>
-
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={!name || !location || !capacity}>
-          Crear Laboratorio
-        </Button>
-      </div>
-    </form>
   )
 }
 
