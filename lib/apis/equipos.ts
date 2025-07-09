@@ -24,20 +24,25 @@ export async function getEquipos(params?: {
   estado?: string;
   id_laboratorio?: number;
 }) {
-  const res = await axios.get<Equipo[]>(`${API_URL}/equipos`, { params });
+  const res = await axios.get<Equipo[]>(
+    `${API_URL}/api/laboratorios/equipos/`,
+    {
+      params,
+    }
+  );
   return res.data;
 }
 
 export async function getEquipo(id: number) {
   const res = await axios.get<Equipo & { laboratorio: any }>(
-    `${API_URL}/equipos/${id}`
+    `${API_URL}/api/laboratorios/equipos/${id}`
   );
   return res.data;
 }
 
 export async function createEquipo(data: EquipoCreate) {
   const res = await axios.post<Equipo>(
-    `${API_URL}/laboratorios/equipos/`,
+    `${API_URL}/api/laboratorios/equipos/`,
     data
   );
   return res.data;

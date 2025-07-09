@@ -19,7 +19,7 @@ export async function getLaboratorios(params?: {
   order_by?: string;
   nombre?: string;
 }) {
-  const res = await axios.get<Laboratorio[]>(`${API_URL}/laboratorios`, {
+  const res = await axios.get<Laboratorio[]>(`${API_URL}/api/laboratorios`, {
     params,
   });
   return res.data;
