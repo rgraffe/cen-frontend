@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Computer, Clock, AlertCircle, CheckCircle } from "lucide-react"
+import { useState, useEffect } from "react"
+import { ReservationForm } from "@/components/ReservationForm"
+import { obtenerReservas } from "@/lib/apis/reservas"
 
 interface User {
   id: string
@@ -17,6 +20,8 @@ interface DashboardProps {
 }
 
 export function Dashboard({ user }: DashboardProps) {
+  const [showReservationForm, setShowReservationForm] = useState(false)
+
   const stats = {
     totalLabs: 8,
     totalComputers: 120,
@@ -38,6 +43,12 @@ export function Dashboard({ user }: DashboardProps) {
     { name: "Lab C-301", computers: 35, available: 30, inUse: 5 },
     { name: "Lab D-102", computers: 30, available: 28, inUse: 2 },
   ]
+
+  useEffect(() => {
+    obtenerReservas()
+      .then((data) => console.log("Reservas desde backend:", data))
+      .catch((err) => console.error("Error al conectar con el backend:", err))
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -131,7 +142,18 @@ export function Dashboard({ user }: DashboardProps) {
                 </div>
               ))}
             </div>
-            {user.role === "professor" && <Button className="w-full mt-4">Nueva Reserva</Button>}
+            {user.role === "professor" && (
+              <Button className="w-full mt-4" onClick={() => setShowReservationForm(true)}>
+                Nueva Reserva
+              </Button>
+            )}
+            {showReservationForm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+                  <ReservationForm userId={parseInt(user.id)} onClose={() => setShowReservationForm(false)} />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

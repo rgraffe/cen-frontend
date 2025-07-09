@@ -1,8 +1,10 @@
 "use client"
 
-import type React from "react"
+import React, { useState, useEffect } from "react"
+import { useMutation } from "@tanstack/react-query"
+import { crearHorarioClase, HorarioClasePayload } from "@/lib/apis/horarios-clase"
+import { obtenerReservas } from "@/lib/apis/reservas"
 
-import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +20,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Calendar, Computer, X } from "lucide-react"
+import { ReservationForm } from "@/components/ReservationForm"
+import { ClassScheduleForm } from "@/components/ClassScheduleForm"
 
 interface ReservationCalendarProps {
   user: {
@@ -47,6 +51,22 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
   const [selectedLab, setSelectedLab] = useState<string>("all")
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0])
   const [showNewReservation, setShowNewReservation] = useState(false)
+  const [showNewHorario, setShowNewHorario] = useState(false)
+  const [profesores, setProfesores] = useState<{ id: string, name: string }[]>([])
+
+  // MOCK: Profesores de ejemplo (solo este useEffect, elimina el fetch para que no se sobreescriba)
+  useEffect(() => {
+    setProfesores([
+      { id: "3", name: "María López" },
+      { id: "4", name: "Dr. Juan Pérez" },
+      { id: "5", name: "Prof. Carlos López" },
+    ])
+  }, [])
+
+  const mutation = useMutation({
+    mutationFn: (payload: HorarioClasePayload) => crearHorarioClase(payload),
+    onSuccess: () => setShowNewHorario(false),
+  })
 
   const labs = [
     { id: "lab-a101", name: "Lab A-101", computers: 30 },
@@ -155,7 +175,7 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
                   <SelectItem value="all">Todos los laboratorios</SelectItem>
                   {labs.map((lab) => (
                     <SelectItem key={lab.id} value={lab.id}>
-                      {lab.name}
+                      {lab.id} - {lab.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -185,7 +205,25 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
                       Selecciona el laboratorio, computadora y horario para tu reserva
                     </DialogDescription>
                   </DialogHeader>
-                  <NewReservationForm onClose={() => setShowNewReservation(false)} />
+                  <ReservationForm userId={parseInt(user.id)} onClose={() => setShowNewReservation(false)} />
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {user.role === "admin" && (
+              <Dialog open={showNewHorario} onOpenChange={setShowNewHorario}>
+                <DialogTrigger asChild>
+                  <Button>Nuevo Horario de Clases</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Nuevo Horario de Clases</DialogTitle>
+                  </DialogHeader>
+                  <ClassScheduleForm
+                    profesores={profesores}
+                    labs={labs}
+                    onClose={() => setShowNewHorario(false)}
+                  />
                 </DialogContent>
               </Dialog>
             )}
@@ -329,109 +367,5 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
         </CardContent>
       </Card>
     </div>
-  )
-}
-
-function NewReservationForm({ onClose }: { onClose: () => void }) {
-  const [reservationType, setReservationType] = useState<"lab" | "computer">("computer")
-  const [selectedLab, setSelectedLab] = useState("")
-  const [selectedComputer, setSelectedComputer] = useState("")
-  const [startTime, setStartTime] = useState("")
-  const [endTime, setEndTime] = useState("")
-
-  const labs = [
-    { id: "lab-a101", name: "Lab A-101", computers: Array.from({ length: 30 }, (_, i) => `PC-${i + 1}`) },
-    { id: "lab-b205", name: "Lab B-205", computers: Array.from({ length: 25 }, (_, i) => `PC-${i + 1}`) },
-    { id: "lab-c301", name: "Lab C-301", computers: Array.from({ length: 35 }, (_, i) => `PC-${i + 1}`) },
-    { id: "lab-d102", name: "Lab D-102", computers: Array.from({ length: 30 }, (_, i) => `PC-${i + 1}`) },
-  ]
-
-  const selectedLabData = labs.find((lab) => lab.id === selectedLab)
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Implementar lógica de creación de reserva
-    console.log("Nueva reserva:", {
-      type: reservationType,
-      lab: selectedLab,
-      computer: selectedComputer,
-      startTime,
-      endTime,
-    })
-    onClose()
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Tipo de Reserva</Label>
-        <Select value={reservationType} onValueChange={(value: "lab" | "computer") => setReservationType(value)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="computer">Computadora Específica</SelectItem>
-            <SelectItem value="lab">Laboratorio Completo</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Laboratorio</Label>
-        <Select value={selectedLab} onValueChange={setSelectedLab}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona un laboratorio" />
-          </SelectTrigger>
-          <SelectContent>
-            {labs.map((lab) => (
-              <SelectItem key={lab.id} value={lab.id}>
-                {lab.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {reservationType === "computer" && selectedLabData && (
-        <div className="space-y-2">
-          <Label>Computadora</Label>
-          <Select value={selectedComputer} onValueChange={setSelectedComputer}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona una computadora" />
-            </SelectTrigger>
-            <SelectContent>
-              {selectedLabData.computers.map((computer) => (
-                <SelectItem key={computer} value={computer}>
-                  {computer}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Hora de Inicio</Label>
-          <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} min="08:00" max="19:00" />
-        </div>
-        <div className="space-y-2">
-          <Label>Hora de Fin</Label>
-          <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} min="08:00" max="20:00" />
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          disabled={!selectedLab || !startTime || !endTime || (reservationType === "computer" && !selectedComputer)}
-        >
-          Crear Reserva
-        </Button>
-      </div>
-    </form>
   )
 }
