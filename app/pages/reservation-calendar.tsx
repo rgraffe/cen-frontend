@@ -6,6 +6,7 @@ import { crearHorarioClase, HorarioClasePayload } from "@/lib/apis/horarios-clas
 import { obtenerReservas, cancelarReserva } from "@/lib/apis/reservas"
 import { getLaboratorios } from "@/lib/apis/laboratorios"
 import { getEquipos } from "@/lib/apis/equipos"
+import { getAllUsers } from "@/lib/apis/getAllUsers"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -43,6 +44,7 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
   const [reservas, setReservas] = useState<any[]>([])
   const [labs, setLabs] = useState<any[]>([])
   const [equipos, setEquipos] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [reservationToCancel, setReservationToCancel] = useState<number | null>(null)
 
@@ -53,14 +55,16 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const [resData, labsData, equiposData] = await Promise.all([
+      const [resData, labsData, equiposData, usersData] = await Promise.all([
         obtenerReservas(user.role === "admin" ? { fecha: selectedDate } : { fecha: selectedDate, id_usuario: user.id }),
         getLaboratorios(),
         getEquipos(),
+        user.role === "admin" ? getAllUsers() : Promise.resolve([]),
       ])
       setReservas(resData)
       setLabs(labsData)
       setEquipos(equiposData)
+      setUsers(usersData)
     }
     fetchData()
   }, [selectedDate, user])
@@ -84,6 +88,10 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
   // Utilidades para mostrar nombres
   const getLabName = (id: number) => labs.find((l) => l.id === id)?.nombre || `Lab ${id}`
   const getEquipoName = (id: number) => equipos.find((e) => e.id === id)?.nombre || `PC-${id}`
+  const getUserName = (id: string | number) => {
+    const found = users.find((u) => u.id == id)
+    return found ? found.name : "";
+  }
 
   return (
     <div className="space-y-6">
@@ -155,28 +163,11 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
                       Selecciona el laboratorio, computadora y horario para tu reserva
                     </DialogDescription>
                   </DialogHeader>
-                  <ReservationForm userId={parseInt(user.id)} onClose={() => setShowNewReservation(false)} />
+                  <ReservationForm userId={parseInt(user.id)} userRole={user.role} onClose={() => setShowNewReservation(false)} />
                 </DialogContent>
               </Dialog>
             )}
 
-            {user.role === "admin" && (
-              <Dialog open={showNewHorario} onOpenChange={setShowNewHorario}>
-                <DialogTrigger asChild>
-                  <Button>Nuevo Horario de Clases</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Nuevo Horario de Clases</DialogTitle>
-                  </DialogHeader>
-                  <ClassScheduleForm
-                    profesores={profesores}
-                    labs={labs}
-                    onClose={() => setShowNewHorario(false)}
-                  />
-                </DialogContent>
-              </Dialog>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -244,24 +235,6 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
                     </div>
                   )
                 })}
-
-              {/* Mensaje cuando no hay reservas */}
-              {filteredReservations.length === 0 && (
-                <div className="p-8 text-center text-muted-foreground">
-                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  {user.role === "professor" || user.role === "student" ? (
-                    <>
-                      <p className="text-lg font-medium mb-2">No tienes reservas para este día</p>
-                      <p>Puedes crear una nueva reserva usando el botón arriba.</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-lg font-medium mb-2">No hay reservas programadas</p>
-                      <p>Para la fecha seleccionada: {new Date(selectedDate).toLocaleDateString("es-ES")}</p>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </CardContent>
@@ -290,6 +263,9 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
                           {getLabName(reserva.id_ubicacion)}
                           {reserva.equipos && reserva.equipos.length > 0 && reserva.equipos[0] !== 0 &&
                             ` - ${getEquipoName(reserva.equipos[0])}`}
+                          {user.role === "admin" && (
+                            <span className="ml-2 text-xs text-muted-foreground">{getUserName(reserva.id_usuario)}</span>
+                          )}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {new Date(reserva.fecha_inicio).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

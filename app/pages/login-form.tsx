@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { loginUser } from "@/lib/apis/users"
 
 interface User {
   id: string
@@ -21,20 +21,33 @@ interface LoginFormProps {
 
 export function LoginForm({ onLogin }: LoginFormProps) {
   const [email, setEmail] = useState("")
-  const [selectedRole, setSelectedRole] = useState<string>("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  // Usuarios de demostración
-  const demoUsers = {
-    superuser: { id: "1", name: "Ana García", email: "ana.garcia@ucab.edu.ve", role: "superuser" as const },
-    admin: { id: "2", name: "Carlos Rodríguez", email: "carlos.rodriguez@ucab.edu.ve", role: "admin" as const },
-    professor: { id: "3", name: "María López", email: "maria.lopez@ucab.edu.ve", role: "professor" as const },
-    student: { id: "4", name: "Pedro Martínez", email: "pedro.martinez@ucab.edu.ve", role: "student" as const },
-  }
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (selectedRole && demoUsers[selectedRole as keyof typeof demoUsers]) {
-      onLogin(demoUsers[selectedRole as keyof typeof demoUsers])
+    setError("")
+    setLoading(true)
+    try {
+      const { user } = await loginUser(email, password)
+      onLogin({
+        id: String(user.id),
+        name: user.name,
+        email: user.email,
+        role:
+          (user.type?.toLowerCase() === "administrador"
+            ? "admin"
+            : user.type?.toLowerCase() === "profesor"
+            ? "professor"
+            : user.type?.toLowerCase() === "estudiante"
+            ? "student"
+            : "student") as "superuser" | "admin" | "professor" | "student",
+      })
+    } catch (err: any) {
+      setError(err.message || "Error de autenticación")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -42,39 +55,35 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     <Card>
       <CardHeader>
         <CardTitle>Iniciar Sesión</CardTitle>
-        <CardDescription>Selecciona un rol para acceder al sistema de demostración</CardDescription>
+        <CardDescription>Ingresa tus credenciales para acceder al sistema</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="role">Rol de Usuario</Label>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona tu rol" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="superuser">Superusuario</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="professor">Profesor</SelectItem>
-                <SelectItem value="student">Estudiante</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="email">Correo electrónico</Label>
+            <input
+              id="email"
+              type="email"
+              className="w-full border rounded px-3 py-2"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
           </div>
-
-          {selectedRole && (
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
-                <strong>Usuario de demostración:</strong>
-                <br />
-                {demoUsers[selectedRole as keyof typeof demoUsers]?.name}
-                <br />
-                {demoUsers[selectedRole as keyof typeof demoUsers]?.email}
-              </p>
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" disabled={!selectedRole}>
-            Ingresar
+          <div className="space-y-2">
+            <Label htmlFor="password">Contraseña</Label>
+            <input
+              id="password"
+              type="password"
+              className="w-full border rounded px-3 py-2"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Ingresando..." : "Ingresar"}
           </Button>
         </form>
       </CardContent>

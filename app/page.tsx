@@ -3,9 +3,8 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Computer, Users, Clock, LogOut } from "lucide-react"
+import {Computer,Users, Clock, LogOut } from "lucide-react"
 import { LoginForm } from "./pages/login-form"
-import { Dashboard } from "./pages/dashboard"
 import { ReservationCalendar } from "./pages/reservation-calendar"
 import { LabManagement } from "./pages/lab-management"
 import { UserManagement } from "./pages/user-management"
@@ -21,7 +20,7 @@ interface User {
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [currentView, setCurrentView] = useState<"dashboard" | "calendar" | "labs" | "users">("dashboard")
+  const [currentView, setCurrentView] = useState<"calendar" | "labs" | "users">("calendar")
 
   const handleLogin = (user: User) => {
     setCurrentUser(user)
@@ -29,7 +28,7 @@ export default function Home() {
 
   const handleLogout = () => {
     setCurrentUser(null)
-    setCurrentView("dashboard")
+    setCurrentView("calendar")
   }
 
   if (!currentUser) {
@@ -47,7 +46,6 @@ export default function Home() {
   }
 
   const navigation = [
-    { id: "dashboard", label: "Dashboard", icon: Calendar, show: true },
     { id: "calendar", label: "Horarios", icon: Clock, show: true },
     { id: "labs", label: "Laboratorios", icon: Computer, show: currentUser.role !== "professor" },
     {
@@ -109,7 +107,6 @@ export default function Home() {
         </div>
 
         {/* Content */}
-        {currentView === "dashboard" && <Dashboard user={currentUser} />}
         {currentView === "calendar" && <ReservationCalendar user={currentUser} />}
         {currentView === "labs" && <LabManagement user={currentUser} />}
         {currentView === "users" && <UserManagement user={currentUser} />}

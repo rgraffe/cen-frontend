@@ -14,10 +14,11 @@ interface ReservationFormProps {
   userId: number
   onSuccess?: () => void
   onClose?: () => void
+  userRole?: string
 }
 
-export function ReservationForm({ userId, onSuccess, onClose }: ReservationFormProps) {
-  const [reservationType, setReservationType] = useState<"lab" | "computer">("computer")
+export function ReservationForm({ userId, onSuccess, onClose, userRole }: ReservationFormProps) {
+  const [reservationType, setReservationType] = useState<"lab" | "computer">(userRole === "student" ? "computer" : "computer")
   const [selectedLab, setSelectedLab] = useState("")
   const [selectedComputer, setSelectedComputer] = useState("")
   const [startTime, setStartTime] = useState("")
@@ -73,18 +74,20 @@ export function ReservationForm({ userId, onSuccess, onClose }: ReservationFormP
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Tipo de Reserva</Label>
-        <Select value={reservationType} onValueChange={(value: "lab" | "computer") => setReservationType(value)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="computer">Computadora Específica</SelectItem>
-            <SelectItem value="lab">Laboratorio Completo</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {userRole !== "student" && (
+        <div className="space-y-2">
+          <Label>Tipo de Reserva</Label>
+          <Select value={reservationType} onValueChange={(value: "lab" | "computer") => setReservationType(value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="computer">Computadora Específica</SelectItem>
+              <SelectItem value="lab">Laboratorio Completo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="space-y-2">
         <Label>Laboratorio</Label>
         <Select value={selectedLab} onValueChange={setSelectedLab}>
