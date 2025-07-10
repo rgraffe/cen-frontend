@@ -511,7 +511,8 @@ function NewUserForm({
           <SelectContent>
             <SelectItem value="student">Estudiante</SelectItem>
             <SelectItem value="professor">Profesor</SelectItem>
-            {currentUserRole === "superuser" && (
+            {(currentUserRole === "superuser" ||
+              currentUserRole === "admin") && (
               <SelectItem value="admin">Administrador</SelectItem>
             )}
           </SelectContent>

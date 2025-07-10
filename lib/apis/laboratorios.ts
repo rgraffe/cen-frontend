@@ -27,25 +27,28 @@ export async function getLaboratorios(params?: {
 
 export async function getLaboratorio(id: number) {
   const res = await axios.get<Laboratorio & { equipos: any[] }>(
-    `${API_URL}/${id}`
+    `${API_URL}/api/laboratorios/${id}`
   );
   return res.data;
 }
 
 export async function createLaboratorio(data: LaboratorioCreate) {
-  const res = await axios.post<Laboratorio>(`${API_URL}/laboratorios`, data);
+  const res = await axios.post<Laboratorio>(
+    `${API_URL}/api/laboratorios`,
+    data
+  );
   return res.data;
 }
 
 export async function updateLaboratorio(id: number, data: LaboratorioCreate) {
   const res = await axios.patch<Laboratorio>(
-    `${API_URL}/laboratorios/laboratorios${id}`,
+    `${API_URL}/api/laboratorios/${id}`,
     data
   );
   return res.data;
 }
 
 export async function deleteLaboratorio(id: number) {
-  const res = await axios.delete(`${API_URL}/laboratorios/${id}`);
+  const res = await axios.delete(`${API_URL}/api/laboratorios/${id}`);
   return res.status === 204;
 }
