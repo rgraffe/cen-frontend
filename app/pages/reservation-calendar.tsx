@@ -1,9 +1,11 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useMutation } from "@tanstack/react-query"
+import { useQuery, useMutation } from "@tanstack/react-query"
 import { crearHorarioClase, HorarioClasePayload } from "@/lib/apis/horarios-clase"
-import { obtenerReservas } from "@/lib/apis/reservas"
+import { obtenerReservas, cancelarReserva } from "@/lib/apis/reservas"
+import { getLaboratorios } from "@/lib/apis/laboratorios"
+import { getEquipos } from "@/lib/apis/equipos"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -32,124 +34,72 @@ interface ReservationCalendarProps {
   }
 }
 
-interface Reservation {
-  id: string
-  labId: string
-  labName: string
-  computerId?: string
-  computerName?: string
-  professorName: string
-  professorEmail: string
-  date: string
-  startTime: string
-  endTime: string
-  type: "lab" | "computer"
-  status: "active" | "scheduled" | "completed"
-}
-
 export function ReservationCalendar({ user }: ReservationCalendarProps) {
   const [selectedLab, setSelectedLab] = useState<string>("all")
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0])
   const [showNewReservation, setShowNewReservation] = useState(false)
   const [showNewHorario, setShowNewHorario] = useState(false)
   const [profesores, setProfesores] = useState<{ id: string, name: string }[]>([])
-
-  // MOCK: Profesores de ejemplo (solo este useEffect, elimina el fetch para que no se sobreescriba)
-  useEffect(() => {
-    setProfesores([
-      { id: "3", name: "María López" },
-      { id: "4", name: "Dr. Juan Pérez" },
-      { id: "5", name: "Prof. Carlos López" },
-    ])
-  }, [])
+  const [reservas, setReservas] = useState<any[]>([])
+  const [labs, setLabs] = useState<any[]>([])
+  const [equipos, setEquipos] = useState<any[]>([])
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [reservationToCancel, setReservationToCancel] = useState<number | null>(null)
 
   const mutation = useMutation({
     mutationFn: (payload: HorarioClasePayload) => crearHorarioClase(payload),
     onSuccess: () => setShowNewHorario(false),
   })
 
-  const labs = [
-    { id: "lab-a101", name: "Lab A-101", computers: 30 },
-    { id: "lab-b205", name: "Lab B-205", computers: 25 },
-    { id: "lab-c301", name: "Lab C-301", computers: 35 },
-    { id: "lab-d102", name: "Lab D-102", computers: 30 },
-  ]
+  useEffect(() => {
+    async function fetchData() {
+      const [resData, labsData, equiposData] = await Promise.all([
+        obtenerReservas(user.role === "admin" ? { fecha: selectedDate } : { fecha: selectedDate, id_usuario: user.id }),
+        getLaboratorios(),
+        getEquipos(),
+      ])
+      setReservas(resData)
+      setLabs(labsData)
+      setEquipos(equiposData)
+    }
+    fetchData()
+  }, [selectedDate, user])
 
-  const timeSlots = [
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
-    "19:00",
-  ]
+  const handleCancelReservation = async (reservationId: number) => {
+    setCancelDialogOpen(false)
+    setReservationToCancel(null)
+    await cancelarReserva(reservationId)
+    // Refresca reservas
+    const resData = await obtenerReservas(user.role === "admin" ? { fecha: selectedDate } : { fecha: selectedDate, id_usuario: user.id })
+    setReservas(resData)
+  }
 
-  const reservations: Reservation[] = [
-    {
-      id: "1",
-      labId: "lab-a101",
-      labName: "Lab A-101",
-      computerId: "pc-15",
-      computerName: "PC-15",
-      professorName: "Dr. Juan Pérez",
-      professorEmail: "juan.perez@ucab.edu.ve",
-      date: selectedDate,
-      startTime: "10:00",
-      endTime: "12:00",
-      type: "computer",
-      status: "active",
-    },
-    {
-      id: "2",
-      labId: "lab-b205",
-      labName: "Lab B-205",
-      professorName: "Dra. Ana Martínez",
-      professorEmail: "ana.martinez@ucab.edu.ve",
-      date: selectedDate,
-      startTime: "14:00",
-      endTime: "16:00",
-      type: "lab",
-      status: "scheduled",
-    },
-    {
-      id: "3",
-      labId: "lab-a101",
-      labName: "Lab A-101",
-      computerId: "pc-08",
-      computerName: "PC-08",
-      professorName: "Prof. Carlos López",
-      professorEmail: "carlos.lopez@ucab.edu.ve",
-      date: selectedDate,
-      startTime: "16:00",
-      endTime: "18:00",
-      type: "computer",
-      status: "scheduled",
-    },
-  ]
-
-  const filteredReservations = reservations.filter(
-    (reservation) => selectedLab === "all" || reservation.labId === selectedLab,
+  // Filtrar reservas por laboratorio seleccionado y por usuario si no es admin
+  const filteredReservations = reservas.filter(
+    (reserva) =>
+      (selectedLab === "all" || reserva.id_ubicacion === Number(selectedLab)) &&
+      (user.role === "admin" || reserva.id_usuario == user.id)
   )
 
-  const handleCancelReservation = (reservationId: string) => {
-    // Implementar lógica de cancelación
-    console.log("Cancelando reserva:", reservationId)
-  }
-
-  const getReservationForSlot = (labId: string, time: string) => {
-    return filteredReservations.find(
-      (reservation) => reservation.labId === labId && reservation.startTime <= time && reservation.endTime > time,
-    )
-  }
+  // Utilidades para mostrar nombres
+  const getLabName = (id: number) => labs.find((l) => l.id === id)?.nombre || `Lab ${id}`
+  const getEquipoName = (id: number) => equipos.find((e) => e.id === id)?.nombre || `PC-${id}`
 
   return (
     <div className="space-y-6">
+      {/* Confirmación de cancelación */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Cancelación</DialogTitle>
+            <DialogDescription>¿Estás seguro de que deseas cancelar esta reserva?</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>No</Button>
+            <Button variant="destructive" onClick={() => reservationToCancel && handleCancelReservation(reservationToCancel)}>Sí, cancelar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       {/* Filters and Controls */}
       <Card>
         <CardHeader>
@@ -299,8 +249,17 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
               {filteredReservations.length === 0 && (
                 <div className="p-8 text-center text-muted-foreground">
                   <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">No hay reservas programadas</p>
-                  <p>Para la fecha seleccionada: {new Date(selectedDate).toLocaleDateString("es-ES")}</p>
+                  {user.role === "professor" || user.role === "student" ? (
+                    <>
+                      <p className="text-lg font-medium mb-2">No tienes reservas para este día</p>
+                      <p>Puedes crear una nueva reserva usando el botón arriba.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-lg font-medium mb-2">No hay reservas programadas</p>
+                      <p>Para la fecha seleccionada: {new Date(selectedDate).toLocaleDateString("es-ES")}</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -321,41 +280,37 @@ export function ReservationCalendar({ user }: ReservationCalendarProps) {
             {filteredReservations.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No hay reservas para la fecha seleccionada</p>
             ) : (
-              filteredReservations.map((reservation) => (
-                <div key={reservation.id} className="flex items-center justify-between p-4 border rounded-lg">
+              filteredReservations.map((reserva) => (
+                <div key={reserva.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      {reservation.type === "lab" ? (
-                        <Computer className="w-5 h-5 text-blue-600" />
-                      ) : (
-                        <Computer className="w-5 h-5 text-green-600" />
-                      )}
+                      <Computer className="w-5 h-5 text-green-600" />
                       <div>
                         <div className="font-medium">
-                          {reservation.labName}
-                          {reservation.computerName && ` - ${reservation.computerName}`}
+                          {getLabName(reserva.id_ubicacion)}
+                          {reserva.equipos && reserva.equipos.length > 0 && reserva.equipos[0] !== 0 &&
+                            ` - ${getEquipoName(reserva.equipos[0])}`}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {reservation.startTime} - {reservation.endTime}
+                          {new Date(reserva.fecha_inicio).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {" - "}
+                          {new Date(reserva.fecha_fin).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </div>
                       </div>
                     </div>
-
                     <div className="flex items-center gap-2">
-                      <X className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <div className="text-sm font-medium">{reservation.professorName}</div>
-                        <div className="text-xs text-muted-foreground">{reservation.professorEmail}</div>
+                        <div className="text-sm font-medium">{reserva.usuario?.nombre || ""}</div>
+                        <div className="text-xs text-muted-foreground">{reserva.usuario?.email || ""}</div>
                       </div>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2">
-                    <Badge variant={reservation.status === "active" ? "default" : "secondary"}>
-                      {reservation.status === "active" ? "Activa" : "Programada"}
+                    <Badge variant={reserva.status === "active" ? "default" : reserva.status === "cancelled" ? "destructive" : "secondary"}>
+                      {reserva.status === "active" ? "Activa" : reserva.status === "cancelled" ? "Cancelada" : "Programada"}
                     </Badge>
-                    {user.role !== "professor" && user.role !== "student" && (
-                      <Button size="sm" variant="outline" onClick={() => handleCancelReservation(reservation.id)}>
+                    {(user.role === "admin" || (user.id == reserva.id_usuario)) && reserva.status !== "cancelled" && (
+                      <Button size="sm" variant="outline" onClick={() => { setReservationToCancel(reserva.id); setCancelDialogOpen(true); }}>
                         Cancelar
                       </Button>
                     )}

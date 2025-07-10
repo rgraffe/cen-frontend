@@ -1,8 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { crearReserva, ReservaPayload } from "@/lib/apis/reservas"
+import { getLaboratorios } from "@/lib/apis/laboratorios"
+import { getEquipos } from "@/lib/apis/equipos"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -21,15 +23,26 @@ export function ReservationForm({ userId, onSuccess, onClose }: ReservationFormP
   const [startTime, setStartTime] = useState("")
   const [endTime, setEndTime] = useState("")
   const [date, setDate] = useState("")
+  const [labs, setLabs] = useState<any[]>([])
+  const [equipos, setEquipos] = useState<any[]>([])
 
-  const labs = [
-    { id: 1, name: "Lab A-101", computers: Array.from({ length: 30 }, (_, i) => i + 1) },
-    { id: 2, name: "Lab B-205", computers: Array.from({ length: 25 }, (_, i) => i + 1) },
-    { id: 3, name: "Lab C-301", computers: Array.from({ length: 35 }, (_, i) => i + 1) },
-    { id: 4, name: "Lab D-102", computers: Array.from({ length: 30 }, (_, i) => i + 1) },
-  ]
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const labsData = await getLaboratorios()
+        setLabs(labsData)
+        const equiposData = await getEquipos()
+        setEquipos(equiposData)
+      } catch (err) {
+        setLabs([])
+        setEquipos([])
+      }
+    }
+    fetchData()
+  }, [])
 
   const selectedLabData = labs.find((lab) => lab.id === Number(selectedLab))
+  const filteredEquipos = equipos.filter((e) => e.id_laboratorio === Number(selectedLab))
 
   const mutation = useMutation({
     mutationFn: (payload: ReservaPayload) => crearReserva(payload),
@@ -44,14 +57,17 @@ export function ReservationForm({ userId, onSuccess, onClose }: ReservationFormP
     if (!selectedLab || !startTime || !endTime || (reservationType === "computer" && !selectedComputer) || !date) return
     const fecha_inicio = `${date}T${startTime}`
     const fecha_fin = `${date}T${endTime}`
-    const payload: ReservaPayload = {
+    const payload = {
+      fecha_creacion: new Date().toISOString(),
       fecha_inicio,
       fecha_fin,
       id_usuario: userId,
       id_ubicacion: Number(selectedLab),
-      id_equipo: reservationType === "computer" ? Number(selectedComputer) : 0,
       status: "pending",
+      id: null,
+      equipos: reservationType === "computer" ? [Number(selectedComputer)] : [0],
     }
+    console.log("Payload enviado al backend:", payload)
     mutation.mutate(payload)
   }
 
@@ -78,13 +94,13 @@ export function ReservationForm({ userId, onSuccess, onClose }: ReservationFormP
           <SelectContent>
             {labs.map((lab) => (
               <SelectItem key={lab.id} value={lab.id.toString()}>
-                {lab.name}
+                {lab.nombre}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      {reservationType === "computer" && selectedLabData && (
+      {reservationType === "computer" && selectedLab && (
         <div className="space-y-2">
           <Label>Computadora</Label>
           <Select value={selectedComputer} onValueChange={setSelectedComputer}>
@@ -92,9 +108,9 @@ export function ReservationForm({ userId, onSuccess, onClose }: ReservationFormP
               <SelectValue placeholder="Selecciona una computadora" />
             </SelectTrigger>
             <SelectContent>
-              {selectedLabData.computers.map((computer) => (
-                <SelectItem key={computer} value={computer.toString()}>
-                  PC-{computer}
+              {filteredEquipos.map((equipo) => (
+                <SelectItem key={equipo.id} value={equipo.id.toString()}>
+                  {equipo.nombre} - {equipo.modelo}
                 </SelectItem>
               ))}
             </SelectContent>

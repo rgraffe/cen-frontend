@@ -54,6 +54,6 @@ export async function updateEquipo(id: number, data: EquipoCreate) {
 }
 
 export async function deleteEquipo(id: number) {
-  const res = await axios.delete(`${API_URL}/equipos/${id}`);
+  const res = await axios.delete(`${API_URL}/api/laboratorios/equipos/${id}`);
   return res.status === 204;
 }
