@@ -1,13 +1,19 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -15,34 +21,57 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Users, Plus, Edit, Trash2, Shield, Search, GraduationCap, BookOpen } from "lucide-react"
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Users,
+  Plus,
+  Edit,
+  Trash2,
+  Shield,
+  Search,
+  GraduationCap,
+  BookOpen,
+} from "lucide-react";
+import { registerUser } from "@/lib/apis/users";
 
 interface SystemUser {
-  id: string
-  name: string
-  email: string
-  role: "superuser" | "admin" | "professor" | "student"
-  createdAt: string
-  lastLogin: string
-  status: "active" | "inactive" | "suspended"
-  monthlyReservations?: number
-  totalReservations?: number
-  studentId?: string // Para estudiantes
-  department?: string // Para profesores
+  id: string;
+  name: string;
+  email: string;
+  role: "superuser" | "admin" | "professor" | "student";
+  createdAt: string;
+  lastLogin: string;
+  status: "active" | "inactive" | "suspended";
+  monthlyReservations?: number;
+  totalReservations?: number;
+  studentId?: string; // Para estudiantes
+  department?: string; // Para profesores
 }
 
 interface UserManagementProps {
-  user: SystemUser
+  user: SystemUser;
 }
 
 export function UserManagement({ user }: UserManagementProps) {
-  const [showNewUser, setShowNewUser] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterRole, setFilterRole] = useState<string>("all")
-  const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [showNewUser, setShowNewUser] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   const [users, setUsers] = useState<SystemUser[]>([
     {
@@ -123,97 +152,103 @@ export function UserManagement({ user }: UserManagementProps) {
       totalReservations: 2,
       studentId: "2024-001236",
     },
-  ])
+  ]);
 
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.studentId && u.studentId.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesRole = filterRole === "all" || u.role === filterRole
-    const matchesStatus = filterStatus === "all" || u.status === filterStatus
+      (u.studentId &&
+        u.studentId.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesRole = filterRole === "all" || u.role === filterRole;
+    const matchesStatus = filterStatus === "all" || u.status === filterStatus;
 
-    return matchesSearch && matchesRole && matchesStatus
-  })
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   const getRoleLabel = (role: string) => {
     switch (role) {
       case "superuser":
-        return "Superusuario"
+        return "Superusuario";
       case "admin":
-        return "Administrador"
+        return "Administrador";
       case "professor":
-        return "Profesor"
+        return "Profesor";
       case "student":
-        return "Estudiante"
+        return "Estudiante";
       default:
-        return role
+        return role;
     }
-  }
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case "superuser":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-100 text-purple-800";
       case "admin":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "professor":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "student":
-        return "bg-orange-100 text-orange-800"
+        return "bg-orange-100 text-orange-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "superuser":
-        return <Shield className="w-3 h-3 mr-1" />
+        return <Shield className="w-3 h-3 mr-1" />;
       case "admin":
-        return <Shield className="w-3 h-3 mr-1" />
+        return <Shield className="w-3 h-3 mr-1" />;
       case "professor":
-        return <GraduationCap className="w-3 h-3 mr-1" />
+        return <GraduationCap className="w-3 h-3 mr-1" />;
       case "student":
-        return <BookOpen className="w-3 h-3 mr-1" />
+        return <BookOpen className="w-3 h-3 mr-1" />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "inactive":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
       case "suspended":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "active":
-        return "Activo"
+        return "Activo";
       case "inactive":
-        return "Inactivo"
+        return "Inactivo";
       case "suspended":
-        return "Suspendido"
+        return "Suspendido";
       default:
-        return status
+        return status;
     }
-  }
+  };
 
   const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter((u) => u.id !== userId))
-  }
+    setUsers(users.filter((u) => u.id !== userId));
+  };
 
-  const handleUpdateUserStatus = (userId: string, newStatus: SystemUser["status"]) => {
-    setUsers(users.map((u) => (u.id === userId ? { ...u, status: newStatus } : u)))
-  }
+  const handleUpdateUserStatus = (
+    userId: string,
+    newStatus: SystemUser["status"]
+  ) => {
+    setUsers(
+      users.map((u) => (u.id === userId ? { ...u, status: newStatus } : u))
+    );
+  };
 
   const stats = {
     totalUsers: users.length,
@@ -221,11 +256,11 @@ export function UserManagement({ user }: UserManagementProps) {
     professors: users.filter((u) => u.role === "professor").length,
     students: users.filter((u) => u.role === "student").length,
     admins: users.filter((u) => u.role === "admin").length,
-  }
+  };
 
   // Verificar permisos: solo superusuarios y administradores pueden gestionar usuarios
-  const canManageUsers = user.role === "superuser" || user.role === "admin"
-  const canCreateSuperusers = user.role === "superuser"
+  const canManageUsers = user.role === "superuser" || user.role === "admin";
+  const canCreateSuperusers = user.role === "superuser";
 
   if (!canManageUsers) {
     return (
@@ -233,10 +268,12 @@ export function UserManagement({ user }: UserManagementProps) {
         <div className="text-center">
           <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-medium mb-2">Acceso Restringido</h3>
-          <p className="text-muted-foreground">No tienes permisos para gestionar usuarios.</p>
+          <p className="text-muted-foreground">
+            No tienes permisos para gestionar usuarios.
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -261,7 +298,9 @@ export function UserManagement({ user }: UserManagementProps) {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Crear Nuevo Usuario</DialogTitle>
-              <DialogDescription>Registra un nuevo usuario en el sistema</DialogDescription>
+              <DialogDescription>
+                Registra un nuevo usuario en el sistema
+              </DialogDescription>
             </DialogHeader>
             <NewUserForm
               onClose={() => setShowNewUser(false)}
@@ -276,23 +315,31 @@ export function UserManagement({ user }: UserManagementProps) {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Usuarios
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">Registrados en el sistema</p>
+            <p className="text-xs text-muted-foreground">
+              Registrados en el sistema
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usuarios Activos</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Usuarios Activos
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeUsers}</div>
-            <p className="text-xs text-muted-foreground">Con acceso al sistema</p>
+            <p className="text-xs text-muted-foreground">
+              Con acceso al sistema
+            </p>
           </CardContent>
         </Card>
 
@@ -303,7 +350,9 @@ export function UserManagement({ user }: UserManagementProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.students}</div>
-            <p className="text-xs text-muted-foreground">Pueden hacer reservas</p>
+            <p className="text-xs text-muted-foreground">
+              Pueden hacer reservas
+            </p>
           </CardContent>
         </Card>
 
@@ -314,13 +363,17 @@ export function UserManagement({ user }: UserManagementProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.professors}</div>
-            <p className="text-xs text-muted-foreground">Pueden hacer reservas</p>
+            <p className="text-xs text-muted-foreground">
+              Pueden hacer reservas
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Administradores</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Administradores
+            </CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -359,7 +412,9 @@ export function UserManagement({ user }: UserManagementProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los roles</SelectItem>
-                  {user.role === "superuser" && <SelectItem value="superuser">Superusuario</SelectItem>}
+                  {user.role === "superuser" && (
+                    <SelectItem value="superuser">Superusuario</SelectItem>
+                  )}
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="professor">Profesor</SelectItem>
                   <SelectItem value="student">Estudiante</SelectItem>
@@ -390,8 +445,11 @@ export function UserManagement({ user }: UserManagementProps) {
         <CardHeader>
           <CardTitle>Lista de Usuarios</CardTitle>
           <CardDescription>
-            {filteredUsers.length} usuario{filteredUsers.length !== 1 ? "s" : ""}
-            {searchTerm || filterRole !== "all" || filterStatus !== "all" ? " (filtrado)" : ""}
+            {filteredUsers.length} usuario
+            {filteredUsers.length !== 1 ? "s" : ""}
+            {searchTerm || filterRole !== "all" || filterStatus !== "all"
+              ? " (filtrado)"
+              : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -425,8 +483,16 @@ export function UserManagement({ user }: UserManagementProps) {
                           <div className="font-medium">{u.name}</div>
                           <div className="text-sm text-muted-foreground">
                             {u.email}
-                            {u.studentId && <div className="text-xs text-blue-600">ID: {u.studentId}</div>}
-                            {u.department && <div className="text-xs text-green-600">{u.department}</div>}
+                            {u.studentId && (
+                              <div className="text-xs text-blue-600">
+                                ID: {u.studentId}
+                              </div>
+                            )}
+                            {u.department && (
+                              <div className="text-xs text-green-600">
+                                {u.department}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -440,7 +506,9 @@ export function UserManagement({ user }: UserManagementProps) {
                     <TableCell>
                       <Select
                         value={u.status}
-                        onValueChange={(value: SystemUser["status"]) => handleUpdateUserStatus(u.id, value)}
+                        onValueChange={(value: SystemUser["status"]) =>
+                          handleUpdateUserStatus(u.id, value)
+                        }
                       >
                         <SelectTrigger className="w-32">
                           <SelectValue />
@@ -453,13 +521,17 @@ export function UserManagement({ user }: UserManagementProps) {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">{new Date(u.lastLogin).toLocaleDateString("es-ES")}</div>
+                      <div className="text-sm">
+                        {new Date(u.lastLogin).toLocaleDateString("es-ES")}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {u.role === "professor" || u.role === "student" ? (
                         <div className="text-sm">
                           <div>Este mes: {u.monthlyReservations || 0}</div>
-                          <div className="text-muted-foreground">Total: {u.totalReservations || 0}</div>
+                          <div className="text-muted-foreground">
+                            Total: {u.totalReservations || 0}
+                          </div>
                         </div>
                       ) : (
                         <span className="text-muted-foreground">N/A</span>
@@ -471,7 +543,11 @@ export function UserManagement({ user }: UserManagementProps) {
                           <Edit className="w-4 h-4" />
                         </Button>
                         {u.id !== user.id && (
-                          <Button size="sm" variant="outline" onClick={() => handleDeleteUser(u.id)}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteUser(u.id)}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         )}
@@ -485,7 +561,7 @@ export function UserManagement({ user }: UserManagementProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
 
 function NewUserForm({
@@ -493,28 +569,47 @@ function NewUserForm({
   canCreateSuperusers,
   currentUserRole,
 }: {
-  onClose: () => void
-  canCreateSuperusers: boolean
-  currentUserRole: string
+  onClose: () => void;
+  canCreateSuperusers: boolean;
+  currentUserRole: string;
 }) {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [role, setRole] = useState<"admin" | "professor" | "student">("student")
-  const [studentId, setStudentId] = useState("")
-  const [department, setDepartment] = useState("")
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"admin" | "professor" | "student">(
+    "student"
+  );
+  const [studentId, setStudentId] = useState("");
+  const [department, setDepartment] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Implementar lógica de creación de usuario
-    console.log("Nuevo usuario:", {
-      name,
-      email,
-      role,
-      studentId: role === "student" ? studentId : undefined,
-      department: role === "professor" ? department : undefined,
-    })
-    onClose()
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      let type: "ADMINISTRADOR" | "PROFESOR" | "ESTUDIANTE" = "ESTUDIANTE";
+      if (role === "admin") type = "ADMINISTRADOR";
+      if (role === "professor") type = "PROFESOR";
+      if (!password) {
+        setError("Debes ingresar una contraseña");
+        setLoading(false);
+        return;
+      }
+      await registerUser({
+        name,
+        email,
+        password,
+        type,
+      });
+      onClose();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Error al crear usuario");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -542,15 +637,35 @@ function NewUserForm({
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="user-password">Contraseña</Label>
+        <Input
+          id="user-password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Ingresa la contraseña del usuario"
+          autoComplete="new-password"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="user-role">Rol</Label>
-        <Select value={role} onValueChange={(value: "admin" | "professor" | "student") => setRole(value)}>
+        <Select
+          value={role}
+          onValueChange={(value: "admin" | "professor" | "student") =>
+            setRole(value)
+          }
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="student">Estudiante</SelectItem>
             <SelectItem value="professor">Profesor</SelectItem>
-            {currentUserRole === "superuser" && <SelectItem value="admin">Administrador</SelectItem>}
+            {currentUserRole === "superuser" && (
+              <SelectItem value="admin">Administrador</SelectItem>
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -583,16 +698,23 @@ function NewUserForm({
 
       <div className="bg-blue-50 p-3 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>Nota:</strong> El usuario recibirá un correo electrónico con las instrucciones para activar su cuenta
-          y establecer su contraseña.
+          <strong>Nota:</strong> El usuario recibirá un correo electrónico con
+          las instrucciones para activar su cuenta y establecer su contraseña.
           {role === "student" && (
             <>
               <br />
-              <strong>Límite de reservas:</strong> Los estudiantes pueden hacer máximo 10 horas de reservas por mes.
+              <strong>Límite de reservas:</strong> Los estudiantes pueden hacer
+              máximo 10 horas de reservas por mes.
             </>
           )}
         </p>
       </div>
+
+      {error && (
+        <div className="text-red-500 text-sm">
+          <p>{error}</p>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onClose}>
@@ -600,11 +722,17 @@ function NewUserForm({
         </Button>
         <Button
           type="submit"
-          disabled={!name || !email || (role === "student" && !studentId) || (role === "professor" && !department)}
+          disabled={
+            loading ||
+            !name ||
+            !email ||
+            (role === "student" && !studentId) ||
+            (role === "professor" && !department)
+          }
         >
-          Crear Usuario
+          {loading ? "Creando..." : "Crear Usuario"}
         </Button>
       </div>
     </form>
-  )
+  );
 }
