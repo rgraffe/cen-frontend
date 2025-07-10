@@ -13,3 +13,7 @@ export async function registerUser(payload: RegisterUserPayload) {
   const response = await axios.post(`${API_BASE}/api/auth/register`, payload);
   return response.data;
 }
+
+export async function deleteUser(id: number | string) {
+  await axios.delete(`${API_BASE}/api/auth/users/${id}`);
+}

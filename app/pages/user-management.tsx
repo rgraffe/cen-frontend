@@ -48,13 +48,13 @@ import {
   GraduationCap,
   BookOpen,
 } from "lucide-react";
-import { registerUser } from "@/lib/apis/users";
+import { registerUser, deleteUser } from "@/lib/apis/users";
 
 interface SystemUser {
   id: string;
   name: string;
   email: string;
-  role: "superuser" | "admin" | "professor" | "student";
+  role: "admin" | "professor" | "student";
   createdAt: string;
   lastLogin: string;
   status: "active" | "inactive" | "suspended";
@@ -72,7 +72,6 @@ export function UserManagement({ user }: UserManagementProps) {
   const [showNewUser, setShowNewUser] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [users, setUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [errorUsers, setErrorUsers] = useState<string | null>(null);
@@ -107,8 +106,6 @@ export function UserManagement({ user }: UserManagementProps) {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case "superuser":
-        return "Superusuario";
       case "admin":
         return "Administrador";
       case "professor":
@@ -122,8 +119,6 @@ export function UserManagement({ user }: UserManagementProps) {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "superuser":
-        return "bg-purple-100 text-purple-800";
       case "admin":
         return "bg-blue-100 text-blue-800";
       case "professor":
@@ -137,8 +132,6 @@ export function UserManagement({ user }: UserManagementProps) {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case "superuser":
-        return <Shield className="w-3 h-3 mr-1" />;
       case "admin":
         return <Shield className="w-3 h-3 mr-1" />;
       case "professor":
@@ -197,9 +190,9 @@ export function UserManagement({ user }: UserManagementProps) {
     admins: users.filter((u) => u.role === "admin").length,
   };
 
-  // Verificar permisos: solo superusuarios y administradores pueden gestionar usuarios
-  const canManageUsers = user.role === "superuser" || user.role === "admin";
-  const canCreateSuperusers = user.role === "superuser";
+  // Verificar permisos: solo administradores pueden gestionar usuarios
+  const canManageUsers = user.role === "admin";
+  const canCreateSuperusers = false;
 
   if (!canManageUsers) {
     return (
@@ -222,9 +215,7 @@ export function UserManagement({ user }: UserManagementProps) {
         <div>
           <h2 className="text-2xl font-bold">Gestión de Usuarios</h2>
           <p className="text-muted-foreground">
-            {user.role === "superuser"
-              ? "Administra todas las cuentas de usuario y permisos del sistema"
-              : "Crea y gestiona cuentas de profesores y estudiantes"}
+            Crea y gestiona cuentas de profesores y estudiantes
           </p>
         </div>
         <Dialog open={showNewUser} onOpenChange={setShowNewUser}>
@@ -347,27 +338,9 @@ export function UserManagement({ user }: UserManagementProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los roles</SelectItem>
-                  {user.role === "superuser" && (
-                    <SelectItem value="superuser">Superusuario</SelectItem>
-                  )}
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="professor">Profesor</SelectItem>
                   <SelectItem value="student">Estudiante</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="min-w-[150px]">
-              <Label>Estado</Label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="active">Activo</SelectItem>
-                  <SelectItem value="inactive">Inactivo</SelectItem>
-                  <SelectItem value="suspended">Suspendido</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -396,6 +369,7 @@ export function UserManagement({ user }: UserManagementProps) {
                 <TableRow>
                   <TableHead>Usuario</TableHead>
                   <TableHead>Rol</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -416,6 +390,18 @@ export function UserManagement({ user }: UserManagementProps) {
                     </TableCell>
                     <TableCell>
                       <Badge>{u.type}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          await deleteUser(u.id);
+                          fetchUsers();
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
